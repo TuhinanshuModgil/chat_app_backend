@@ -9,6 +9,11 @@ import userRoutes from "./routes/user.routes.js";
 
 import connectToMongoDB from "./db/connectToMongoDB.js";
 import { app, server } from "./socket/socket.js";
+<<<<<<< HEAD
+=======
+
+const PORT = process.env.PORT || 5000;
+>>>>>>> origin/master
 
 dotenv.config();
 
@@ -25,10 +30,13 @@ app.use("/api/users", userRoutes);
 
 app.use(express.static(path.join(__dirname, "/frontend/dist")));
 
+<<<<<<< HEAD
 app.get("*", (req, res) => {
 	res.sendFile(path.join(__dirname, "frontend", "dist", "index.html"));
 });
 
+=======
+>>>>>>> origin/master
 server.listen(PORT, () => {
 	connectToMongoDB();
 	console.log(`Server Running on port ${PORT}`);
