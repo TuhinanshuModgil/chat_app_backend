@@ -3,12 +3,12 @@ import User from "../models/user.model.js";
 import generateTokenAndSetCookie from "../utils/generateToken.js";
 import {sendVerificationEmail} from "../utils/sendEmail.js";
 import jwt from "jsonwebtoken";
-import VerificationToken from "../models/verificationToken.model.js";
+
 
 export const signup = async (req, res) => {
 	try {
-		const { fullName, username, password, confirmPassword, gender,email} = req.body;
-
+		const { fullName, username, password, confirmPassword, gender,email} = req.user;
+		console.log("reached signup", req.user)
 		if (password !== confirmPassword) {
 			return res.status(400).json({ error: "Passwords don't match" });
 		}
@@ -38,16 +38,20 @@ export const signup = async (req, res) => {
 			profilePic: gender === "male" ? boyProfilePic : girlProfilePic,
 		});
 
-		//saving user temoparily
-        await newUser.save();
-		const verificationToken = jwt.sign({ userId: newUser._id }, process.env.JWT_SECRET, { expiresIn: '1h' });
-		//send verification
-		const verificationLink = `${process.env.FRONTEND_URL}/verify-email/${verificationToken}`;
-		await sendVerificationEmail(email, verificationLink);
+		if (newUser) {
+			// Generate JWT token here
+			generateTokenAndSetCookie(newUser._id, res);
+			await newUser.save();
 
-		res.status(201).json({
-			message: "Registration successful, please check your email to verify your account.",
-		});
+			res.status(201).json({
+				_id: newUser._id,
+				fullName: newUser.fullName,
+				username: newUser.username,
+				profilePic: newUser.profilePic,
+			});
+		} else {
+			res.status(400).json({ error: "Invalid user data" });
+		}
 	} catch (error) {
 		console.log("Error in signup controller", error.message);
 		res.status(500).json({ error: "Internal Server Error" });
@@ -75,6 +79,34 @@ export const signup = async (req, res) => {
 	// }
 };
 
+export const sendMailVerfication = async (req, res) => {
+	try {
+		const { fullName, username, password, confirmPassword, gender, email} = req.body;
+		console.log("reached sendMailVerfication", req.body)
+		if (password !== confirmPassword) {
+			return res.status(400).json({ error: "Passwords don't match" });
+		}
+
+		const user = await User.findOne({ username });
+
+		if (user) {
+			return res.status(400).json({ error: "Username already exists" });
+		}
+
+		//saving user temoparily
+		const verificationToken = jwt.sign({ fullName, username, password, confirmPassword, gender,email }, process.env.JWT_SECRET, { expiresIn: '1h' });
+		//send verification
+		const verificationLink = `${process.env.FRONTEND_URL}/verify-email/${verificationToken}`;
+		await sendVerificationEmail(email, verificationLink);
+
+		res.status(201).json({
+			message: "Registration successful, please check your email to verify your account.",
+		});
+	} catch (error) {
+		console.log("Error in signup controller", error.message);
+		res.status(500).json({ error: "Internal Server Error" });
+	}
+}
 // Email Verification Controller
 export const verifyEmail = async (req, res) => {
     try {

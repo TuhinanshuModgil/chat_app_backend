@@ -4,8 +4,8 @@ import User from "../models/user.model.js";
 // Middleware to verify if the user's email is verified
 const verifyEmail = async (req, res, next) => {
 	try {
-		const token = req.cookies.jwt;
-
+		const token = req.body.verificationToken;
+		console.log("this is verification token", token)
 		if (!token) {
 			return res.status(401).json({ error: "Unauthorized - No Token Provided" });
 		}
@@ -15,13 +15,8 @@ const verifyEmail = async (req, res, next) => {
 		if (!decoded) {
 			return res.status(401).json({ error: "Unauthorized - Invalid Token" });
 		}
-
-		const user = await User.findById(decoded.userId).select("-password");
-
-		if (!user || !user.isVerified) {
-			return res.status(401).json({ error: "Email not verified" });
-		}
-
+		console.log("this is decoded token", decoded)
+		const user = decoded
 		req.user = user;
 
 		next();
