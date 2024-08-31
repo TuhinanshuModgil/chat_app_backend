@@ -25,6 +25,9 @@ const userSchema = new mongoose.Schema(
 			type: String,
 			default: "",
 		},
+		isVerified: {
+			type: Boolean, default: false
+		 },
 		// createdAt, updatedAt => Member since <createdAt>
 	},
 	{ timestamps: true }
