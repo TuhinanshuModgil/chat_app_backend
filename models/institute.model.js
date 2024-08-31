@@ -23,7 +23,8 @@ const InstituteSchema = new Schema({
             default: [],
         },
     ],
-});
+},
+{timestamps: true });
 
 // Compile model from schema
 const Institute = mongoose.model('Institute', InstituteSchema);
