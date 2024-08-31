@@ -1,7 +1,7 @@
 import bcrypt from "bcryptjs";
 import User from "../models/user.model.js";
 import generateTokenAndSetCookie from "../utils/generateToken.js";
-import sendVerificationEmail from "../utils/sendEmail.js";
+import {sendVerificationEmail} from "../utils/sendEmail.js";
 import jwt from "jsonwebtoken";
 import VerificationToken from "../models/verificationToken.model.js";
 
