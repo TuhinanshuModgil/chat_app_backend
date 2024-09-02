@@ -1,4 +1,4 @@
-const mongoose = require('mongoose');
+import mongoose from 'mongoose';
 const Schema = mongoose.Schema;
 
 // Define the schema for storing usernames and emails
@@ -9,7 +9,7 @@ const InstituteSchema = new Schema({
         unique: true,
         trim: true,
     },
-    email: [{
+    emailDomains: [{
         type: String,
         required: true,
         unique: true,
@@ -29,4 +29,4 @@ const InstituteSchema = new Schema({
 // Compile model from schema
 const Institute = mongoose.model('Institute', InstituteSchema);
 
-module.exports = Institute;
+export default Institute;

@@ -3,11 +3,11 @@ import User from "../models/user.model.js";
 import generateTokenAndSetCookie from "../utils/generateToken.js";
 import {sendVerificationEmail} from "../utils/sendEmail.js";
 import jwt from "jsonwebtoken";
-
+import Institute from "../models/institute.model.js";
 
 export const signup = async (req, res) => {
 	try {
-		const { fullName, username, password, confirmPassword, gender,email} = req.user;
+		const { fullName, username, password, confirmPassword, gender,email, instituteName} = req.user;
 		console.log("reached signup", req.user)
 		if (password !== confirmPassword) {
 			return res.status(400).json({ error: "Passwords don't match" });
@@ -34,7 +34,6 @@ export const signup = async (req, res) => {
 			password: hashedPassword,
 			gender,
 			email,
-			isVerified:false,
 			profilePic: gender === "male" ? boyProfilePic : girlProfilePic,
 		});
 
@@ -81,16 +80,29 @@ export const signup = async (req, res) => {
 
 export const sendMailVerfication = async (req, res) => {
 	try {
-		const { fullName, username, password, confirmPassword, gender, email} = req.body;
+		const { fullName, username, password, confirmPassword, gender, email, instituteName} = req.body;
 		console.log("reached sendMailVerfication", req.body)
 		if (password !== confirmPassword) {
 			return res.status(400).json({ error: "Passwords don't match" });
 		}
 
 		const user = await User.findOne({ username });
-
+		const userEmail = await User.findOne({ email });
+		const institute = await Institute.findOne({ instituteName });
+		const emailValid = false;
+		institute.emailDomains.forEach(domain => {
+			if (email.endsWith(domain)) {
+				emailValid = true;
+			}
+		});
+		if (!emailValid) {
+			return res.status(400).json({ error: "Email domain not allowed for this institute" });
+		}
 		if (user) {
 			return res.status(400).json({ error: "Username already exists" });
+		}
+		if (userEmail) {
+			return res.status(400).json({ error: "Email already exists" });
 		}
 
 		//saving user temoparily
