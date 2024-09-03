@@ -2,10 +2,6 @@ import mongoose from "mongoose";
 
 const userSchema = new mongoose.Schema(
 	{
-		fullName: {
-			type: String,
-			required: true,
-		},
 		username: {
 			type: String,
 			required: true,
@@ -28,7 +24,13 @@ const userSchema = new mongoose.Schema(
 		institute: {
 			type: mongoose.Schema.Types.ObjectId,
 			ref: "Institute",
-		}
+		},
+		groups: [
+			{
+				type: mongoose.Schema.Types.ObjectId,
+				ref: "Group",
+			},
+		],
 		// createdAt, updatedAt => Member since <createdAt>
 	},
 	{ timestamps: true }

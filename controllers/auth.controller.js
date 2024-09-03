@@ -5,17 +5,19 @@ import {sendVerificationEmail} from "../utils/sendEmail.js";
 import jwt from "jsonwebtoken";
 import Institute from "../models/institute.model.js";
 import { isObjectIdOrHexString } from "mongoose";
+import Group from "../models/groups.model.js";
 
 export const signup = async (req, res) => {
 	try {
-		const { fullName, username, password, gender,email, instituteId} = req.user;
+		const {username, password, gender,email, instituteId} = req.user;
 		console.log("reached signup", req.user)
 
-	
-	
 		// HASH PASSWORD HERE
 		const salt = await bcrypt.genSalt(10);
 		const hashedPassword = await bcrypt.hash(password, salt);
+
+		// HASH EMAIL HERE
+		const hashedEmail = await bcrypt.hash(email, salt);
 
 		// https://avatar-placeholder.iran.liara.run/
 
@@ -23,11 +25,11 @@ export const signup = async (req, res) => {
 		const girlProfilePic = `https://avatar.iran.liara.run/public/girl?username=${username}`;
 
 		const newUser = new User({
-			fullName,
+			
 			username,
 			password: hashedPassword,
 			gender,
-			email,
+			email: hashedEmail,
 			institute: instituteId,
 			profilePic: gender === "male" ? boyProfilePic : girlProfilePic,
 		});
@@ -36,8 +38,7 @@ export const signup = async (req, res) => {
 		if (newUser) {
 			// Generate JWT token here
 			generateTokenAndSetCookie(newUser._id, res);
-			await newUser.save();
-
+		
 			// Add the new user's ID to the institute's users array
 			const institute = await Institute.findById(instituteId);
 			if (institute) {
@@ -48,9 +49,19 @@ export const signup = async (req, res) => {
 				return res.status(404).json({ error: "Institute not found" });
 			}
 
+			// add user to group
+			const group = await Group.findOne({ name: "Institute Group" });
+			if (group) {
+				group.users.push(newUser._id);
+				await group.save();
+			}
+
+			// add group to user
+			newUser.groups.push(group._id);
+			await newUser.save();
+
 			res.status(201).json({
 				_id: newUser._id,
-				fullName: newUser.fullName,
 				username: newUser.username,
 				profilePic: newUser.profilePic,
 				institute: newUser.institute,
@@ -87,7 +98,7 @@ export const signup = async (req, res) => {
 
 export const sendMailVerfication = async (req, res) => {
 	try {
-		const { fullName, username, password, gender, email, instituteName} = req.body;
+		const {  username, password, gender, email, instituteName} = req.body;
 		console.log("reached sendMailVerfication", req.body)
 
 		const user = await User.findOne({ username });
@@ -115,7 +126,7 @@ export const sendMailVerfication = async (req, res) => {
 		}
 
 		//saving user temoparily
-		const verificationToken = jwt.sign({ fullName, username, password, gender,email, instituteId: institute._id }, process.env.JWT_SECRET, { expiresIn: '1h' });
+		const verificationToken = jwt.sign({  username, password, gender,email, instituteId: institute._id }, process.env.JWT_SECRET, { expiresIn: '1h' });
 		//send verification
 		const verificationLink = `${process.env.FRONTEND_URL}/verify-email/${verificationToken}`;
 		await sendVerificationEmail(email, verificationLink);
@@ -171,7 +182,6 @@ export const login = async (req, res) => {
 
 		res.status(200).json({
 			_id: user._id,
-			fullName: user.fullName,
 			username: user.username,
 			profilePic: user.profilePic,
 			institute: user.institute,

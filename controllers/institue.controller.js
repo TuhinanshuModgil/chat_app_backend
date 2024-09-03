@@ -1,3 +1,4 @@
+import Group from '../models/groups.model.js';
 import Institute from '../models/institute.model.js';
 
 export const getAllInstitutes = async (req, res) => {
@@ -19,10 +20,15 @@ export const addInstitute = async (req, res) => {
         const newInstitute = new Institute({
             instituteName,
             emailDomains
-        });
-
-        const savedInstitute = await newInstitute.save();
-        res.status(201).json(savedInstitute);
+		});
+    // Create a group for the institute
+		const group = new Group({
+			name: "Institute Group",
+			institute: newInstitute._id,
+		});
+		await group.save();
+		const savedInstitute = await newInstitute.save();
+		res.status(201).json(savedInstitute);
     } catch (error) {
         res.status(500).json({ message: error.message });
     }

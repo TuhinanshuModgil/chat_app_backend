@@ -10,12 +10,12 @@ const GroupSchema = new Schema({
     members: [{
         type: mongoose.Schema.Types.ObjectId,
         ref: 'User', // Reference to the User model
-        required: true
+
     }],
     messages: [
         {
             type: mongoose.Schema.Types.ObjectId,
-            ref: "Message",
+            ref: "GroupMessage",
             default: [],
         },
     ],
