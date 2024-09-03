@@ -4,21 +4,15 @@ import generateTokenAndSetCookie from "../utils/generateToken.js";
 import {sendVerificationEmail} from "../utils/sendEmail.js";
 import jwt from "jsonwebtoken";
 import Institute from "../models/institute.model.js";
+import { isObjectIdOrHexString } from "mongoose";
 
 export const signup = async (req, res) => {
 	try {
-		const { fullName, username, password, confirmPassword, gender,email, instituteName} = req.user;
+		const { fullName, username, password, gender,email, instituteId} = req.user;
 		console.log("reached signup", req.user)
-		if (password !== confirmPassword) {
-			return res.status(400).json({ error: "Passwords don't match" });
-		}
 
-		const user = await User.findOne({ username });
-
-		if (user) {
-			return res.status(400).json({ error: "Username already exists" });
-		}
-
+	
+	
 		// HASH PASSWORD HERE
 		const salt = await bcrypt.genSalt(10);
 		const hashedPassword = await bcrypt.hash(password, salt);
@@ -34,19 +28,32 @@ export const signup = async (req, res) => {
 			password: hashedPassword,
 			gender,
 			email,
+			institute: instituteId,
 			profilePic: gender === "male" ? boyProfilePic : girlProfilePic,
 		});
+		
 
 		if (newUser) {
 			// Generate JWT token here
 			generateTokenAndSetCookie(newUser._id, res);
 			await newUser.save();
 
+			// Add the new user's ID to the institute's users array
+			const institute = await Institute.findById(instituteId);
+			if (institute) {
+				institute.users.push(newUser._id);
+				await institute.save();
+			} else {
+				console.log("Institute not found");
+				return res.status(404).json({ error: "Institute not found" });
+			}
+
 			res.status(201).json({
 				_id: newUser._id,
 				fullName: newUser.fullName,
 				username: newUser.username,
 				profilePic: newUser.profilePic,
+				institute: newUser.institute,
 			});
 		} else {
 			res.status(400).json({ error: "Invalid user data" });
@@ -80,18 +87,20 @@ export const signup = async (req, res) => {
 
 export const sendMailVerfication = async (req, res) => {
 	try {
-		const { fullName, username, password, confirmPassword, gender, email, instituteName} = req.body;
+		const { fullName, username, password, gender, email, instituteName} = req.body;
 		console.log("reached sendMailVerfication", req.body)
-		if (password !== confirmPassword) {
-			return res.status(400).json({ error: "Passwords don't match" });
-		}
 
 		const user = await User.findOne({ username });
 		const userEmail = await User.findOne({ email });
 		const institute = await Institute.findOne({ instituteName });
-		const emailValid = false;
+		let emailValid = false;
+		console.log("institute", institute)
 		institute.emailDomains.forEach(domain => {
-			if (email.endsWith(domain)) {
+			console.log("domains", domain)
+			console.log('email', email)
+			console.log("Includes", email.includes(domain))
+			if (email.includes(domain)) {
+				console.log("reached here")
 				emailValid = true;
 			}
 		});
@@ -106,7 +115,7 @@ export const sendMailVerfication = async (req, res) => {
 		}
 
 		//saving user temoparily
-		const verificationToken = jwt.sign({ fullName, username, password, confirmPassword, gender,email }, process.env.JWT_SECRET, { expiresIn: '1h' });
+		const verificationToken = jwt.sign({ fullName, username, password, gender,email, instituteId: institute._id }, process.env.JWT_SECRET, { expiresIn: '1h' });
 		//send verification
 		const verificationLink = `${process.env.FRONTEND_URL}/verify-email/${verificationToken}`;
 		await sendVerificationEmail(email, verificationLink);
@@ -165,6 +174,7 @@ export const login = async (req, res) => {
 			fullName: user.fullName,
 			username: user.username,
 			profilePic: user.profilePic,
+			institute: user.institute,
 		});
 	} catch (error) {
 		console.log("Error in login controller", error.message);

@@ -25,9 +25,10 @@ const userSchema = new mongoose.Schema(
 			type: String,
 			default: "",
 		},
-		isVerified: {
-			type: Boolean, default: false
-		 },
+		institute: {
+			type: mongoose.Schema.Types.ObjectId,
+			ref: "Institute",
+		}
 		// createdAt, updatedAt => Member since <createdAt>
 	},
 	{ timestamps: true }
