@@ -17,19 +17,25 @@ export const addInstitute = async (req, res) => {
     }
 
     try {
+        // check if institute already exists
+        const institute = await Institute.findOne({ instituteName });
+        if (institute) {
+            return res.status(400).json({ message: "Institute already exists" });
+        }
         const newInstitute = new Institute({
             instituteName,
             emailDomains
 		});
+
     // Create a group for the institute
 		const group = new Group({
-			name: "Institute Group",
+			groupName: "Institute Group",
 			institute: newInstitute._id,
 		});
 		await group.save();
 		const savedInstitute = await newInstitute.save();
 		res.status(201).json(savedInstitute);
     } catch (error) {
-        res.status(500).json({ message: error.message });
+        res.status(500).json({ message: "Error adding institute: " + error.message });
     }
 };

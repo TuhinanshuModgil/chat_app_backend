@@ -7,6 +7,11 @@ const GroupSchema = new Schema({
         required: true,
         trim: true
     },
+    institute: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Institute',
+        required: true
+    },
     members: [{
         type: mongoose.Schema.Types.ObjectId,
         ref: 'User', // Reference to the User model

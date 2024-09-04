@@ -4,7 +4,6 @@ import generateTokenAndSetCookie from "../utils/generateToken.js";
 import {sendVerificationEmail} from "../utils/sendEmail.js";
 import jwt from "jsonwebtoken";
 import Institute from "../models/institute.model.js";
-import { isObjectIdOrHexString } from "mongoose";
 import Group from "../models/groups.model.js";
 
 export const signup = async (req, res) => {
@@ -33,7 +32,7 @@ export const signup = async (req, res) => {
 			institute: instituteId,
 			profilePic: gender === "male" ? boyProfilePic : girlProfilePic,
 		});
-		
+		console.log("user id", newUser._id)
 
 		if (newUser) {
 			// Generate JWT token here
@@ -50,12 +49,12 @@ export const signup = async (req, res) => {
 			}
 
 			// add user to group
-			const group = await Group.findOne({ name: "Institute Group" });
+			const group = await Group.findOne({ groupName: "Institute Group", institute: instituteId });
 			if (group) {
-				group.users.push(newUser._id);
+				group.members.push(newUser._id);
 				await group.save();
 			}
-
+			console.log("group id", group._id)
 			// add group to user
 			newUser.groups.push(group._id);
 			await newUser.save();

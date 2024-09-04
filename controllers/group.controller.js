@@ -1,14 +1,16 @@
 // write the code for the group controller
 
-import Group from "../models/groups.model";
-import User from "../models/user.model";
+import Group from "../models/groups.model.js";
+import User from "../models/user.model.js";
 
 export const getAllGroups = async (req, res) => {
     try {
         const { userId } = req.params;
         const user = await User.findById(userId);
+        console.log("User in group controller", user)
         // find all groups in user.groups
-        const groups = await Group.find({ _id: { $in: user.groups } });
+        const groups = await Group.find({ _id: { $in: user.groups } }).select("-messages");
+        console.log("this is groups", groups)
         res.status(200).json(groups);
     } catch (error) {
         res.status(500).json({ error: error.message });
