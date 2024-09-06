@@ -7,12 +7,12 @@ const generateTokenAndSetCookie = (userId, res) => {
   });
 
   res.cookie("jwt", token, 
-// 	{
-//     httpOnly: true,
-//     secure: process.env.NODE_ENV !== "development",
-//     sameSite: "none",
-//     maxAge: 15 * 24 * 60 * 60 * 1000,
-//   }
+	{
+    httpOnly: true,
+    secure: process.env.NODE_ENV !== "development",
+    // sameSite: "none",
+    maxAge: 15 * 24 * 60 * 60 * 1000,
+  }
 );
 };
 
