@@ -7,9 +7,10 @@ import authRoutes from "./routes/auth.routes.js";
 import messageRoutes from "./routes/message.routes.js";
 import userRoutes from "./routes/user.routes.js";
 import groupRoutes from "./routes/group.routes.js";
-import connectToMongoDB from "./db/connectToMongoDB.js";
 import { app, server } from "./socket/socket.js";
 import cors from "cors";
+import mongoose from "mongoose";
+import connectDB from "./db/connectToMongoDB.js";
 
 dotenv.config();
 
@@ -35,13 +36,41 @@ app.use("/api/groups", groupRoutes);
 // });
 
 app.get("/", (req, res) => {
-	res.send("Hello World");
+	// send mongo db connection status
+	const mongoStatus = mongoose.connection.readyState;
+	let connectionStatus;
+	switch (mongoStatus) {
+		case 0:
+			connectionStatus = "Disconnected";
+			break;
+		case 1:
+			connectionStatus = "Connected";
+			break;
+		case 2:
+			connectionStatus = "Connecting";
+			break;
+		case 3:
+			connectionStatus = "Disconnecting";
+			break;
+		default:
+			connectionStatus = "Unknown";
+	}
+	res.send(`MongoDB Connection Status: ${connectionStatus}`);
+	
 });
 
-server.listen(PORT, () => {
-	connectToMongoDB();
-	console.log(`Server Running on port ${PORT}`);
-});
+connectDB()
+.then(()=>{
+	console.log("Connected to MongoDB")
+})
+.then(()=>{
+	server.listen(PORT, () => {
+		console.log(`Server Running on port ${PORT}`);
+	})
+})
+.catch((error)=>{
+	console.log("Error connecting to MongoDB: ", error.message)
+})
 
 export { app };
 
